@@ -16,12 +16,20 @@ CHOptimizedMethod(0, super, id, CouriaInlineReplyViewController, init)
 {
     self = CHSuper(0, CouriaInlineReplyViewController, init);
     if (self) {
-        self.conversationViewController = ({
-            CKUIBehavior *uiBehavior = [CKUIBehavior sharedBehaviors];
-            CGFloat rightBalloonMaxWidth = [uiBehavior rightBalloonMaxWidthForEntryContentViewWidth:self.entryView.contentView.bounds.size.width];
-            CGFloat leftBalloonMaxWidth = [uiBehavior leftBalloonMaxWidthForTranscriptWidth:self.view.bounds.size.width marginInsets:uiBehavior.transcriptMarginInsets];
-            [[CouriaConversationViewController alloc]initWithConversation:nil rightBalloonMaxWidth:rightBalloonMaxWidth leftBalloonMaxWidth:leftBalloonMaxWidth];
-        });
+        CKUIBehavior *uiBehavior = [CKUIBehavior sharedBehaviors];
+        if ([self.conversationViewController respondsToSelector:@selector(initWithConversation:balloonMaxWidth:marginInsets:)]) {
+            self.conversationViewController = ({
+                CGFloat balloonWidth = [uiBehavior balloonMaxWidthForTranscriptWidth:self.entryView.contentView.bounds.size.width marginInsets:UIEdgeInsetsZero shouldShowPhotoButton:YES shouldShowCharacterCount:NO];
+                [[CouriaConversationViewController alloc] initWithConversation:nil balloonMaxWidth:balloonWidth marginInsets:UIEdgeInsetsZero];
+            });
+        } else {
+            self.conversationViewController = ({
+                CGFloat rightBalloonMaxWidth = [uiBehavior rightBalloonMaxWidthForEntryContentViewWidth:self.entryView.contentView.bounds.size.width];
+                CGFloat leftBalloonMaxWidth = [uiBehavior leftBalloonMaxWidthForTranscriptWidth:self.view.bounds.size.width marginInsets:uiBehavior.transcriptMarginInsets];
+                [[CouriaConversationViewController alloc] initWithConversation:nil rightBalloonMaxWidth:rightBalloonMaxWidth leftBalloonMaxWidth:leftBalloonMaxWidth];
+            });
+        }
+
         self.contactsViewController = ({
             [[CouriaContactsViewController alloc]initWithStyle:UITableViewStylePlain];
         });
