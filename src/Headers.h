@@ -199,6 +199,20 @@ extern NSString *IMStripFormattingFromAddress(NSString *formattedAddress);
 @property (retain, nonatomic) NSDate *timeDelivered;
 @property (retain, nonatomic) NSDate *timeRead;
 @property (assign, nonatomic) NSUInteger flags;
+
+@property(readonly, nonatomic) BOOL isSent;
+@property(readonly, nonatomic) BOOL isEmote;
+@property(readonly, nonatomic) BOOL isLocatingMessage;
+@property(readonly, nonatomic) BOOL isTypingMessage;
+@property(readonly, nonatomic) BOOL isPrepared;
+@property(readonly, nonatomic) BOOL isDelivered;
+- (BOOL)isFromMe;
+@property(readonly, nonatomic) BOOL isPlayed;
+@property(readonly, nonatomic) BOOL isExpirable;
+@property(readonly, nonatomic) BOOL isAudioMessage;
+@property(readonly, nonatomic) BOOL isRead;
+@property(readonly, nonatomic) BOOL isEmpty;
+@property(readonly, nonatomic) BOOL isFinished;
 @end
 
 @interface IMMessage : NSObject
@@ -440,6 +454,7 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 @property (retain, nonatomic) CKTranscriptCollectionView *collectionView;
 @property (nonatomic, readonly) CGFloat leftBalloonMaxWidth;
 @property (nonatomic, readonly) CGFloat rightBalloonMaxWidth;
+- (id)initWithConversation:(CKConversation *)conversation balloonMaxWidth:(float)arg2 marginInsets:(UIEdgeInsets)arg3; // iOS9
 - (instancetype)initWithConversation:(CKConversation *)conversation rightBalloonMaxWidth:(CGFloat)rightBalloonMaxWidth leftBalloonMaxWidth:(CGFloat)leftBalloonMaxWidth;
 - (CKChatItem *)chatItemWithIMChatItem:(IMChatItem *)imChatItem;
 - (void)configureCell:(CKTranscriptCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath;
@@ -634,6 +649,7 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 - (UIEdgeInsets)balloonTranscriptInsets;
 - (CGFloat)leftBalloonMaxWidthForTranscriptWidth:(CGFloat)transcriptWidth marginInsets:(UIEdgeInsets)marginInsets;
 - (CGFloat)rightBalloonMaxWidthForEntryContentViewWidth:(CGFloat)entryContentViewWidth;
+- (float)balloonMaxWidthForTranscriptWidth:(float)arg1 marginInsets:(UIEdgeInsets)arg2 shouldShowPhotoButton:(BOOL)arg3 shouldShowCharacterCount:(BOOL)arg4;//iOS9
 - (CGFloat)transcriptContactImageDiameter;
 - (UIColor *)transcriptBackgroundColor;
 - (BOOL)transcriptCanUseOpaqueMask;
