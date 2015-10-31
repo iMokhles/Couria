@@ -3,6 +3,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AddressBook/AddressBook.h>
 #import <AssetsLibrary/AssetsLibrary.h>
+#import <Photos/Photos.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <Social/Social.h>
 #import <CaptainHook.h>
@@ -46,6 +47,7 @@
 #define UpdateBannerMessage @"updateBanner"
 
 #define CanSendPhotosOption @"canSendPhotos"
+#define ColorSpecifierOption @"colorSpecifier"
 
 #define EnabledSetting @".enabled"
 #define AuthenticationRequiredSetting @".authenticationRequired"
@@ -110,6 +112,7 @@ extern void BBDataProviderSetApplicationBadgeString(BBDataProvider *dataProvider
 @property (copy, nonatomic) NSString *remoteViewControllerClassName;
 @property (assign, nonatomic) BOOL canBypassPinLock;
 @property (assign, nonatomic) BOOL launchCanBypassPinLock;
+@property (assign, nonatomic) NSUInteger activationMode;
 @property (assign ,nonatomic, getter=isAuthenticationRequired) BOOL authenticationRequired;
 + (instancetype)action;
 + (instancetype)actionWithIdentifier:(NSString *)identifier;
@@ -130,11 +133,16 @@ extern void BBDataProviderSetApplicationBadgeString(BBDataProvider *dataProvider
 @property (copy, nonatomic) BBAction *defaultAction;
 @property (copy, nonatomic) BBAction *alternateAction;
 @property (copy, nonatomic) BBAction *acknowledgeAction;
+- (NSArray *)_allActions;
+- (NSArray *)_allSupplementaryActions;
+- (NSArray *)supplementaryActions;
+- (NSArray *)supplementaryActionsForLayout:(NSInteger)layout;
 @end
 
 @interface BBBulletinRequest : BBBulletin
-@property (copy, nonatomic) NSArray *supplementaryActions;
 - (void)setContextValue:(id)value forKey:(NSString *)key;
+- (void)setSupplementaryActions:(NSArray *)actions;
+- (void)setSupplementaryActions:(NSArray *)actions forLayout:(NSInteger)layout;
 - (void)generateNewBulletinID;
 @end
 
@@ -270,6 +278,8 @@ extern NSBundle *CKFrameworkBundle(void);
 
 @interface CKChatItem : NSObject
 @property (retain, nonatomic) IMTranscriptChatItem *IMChatItem;
+@property (copy, nonatomic) NSAttributedString *transcriptText;
+@property (copy, nonatomic) NSAttributedString *transcriptDrawerText;
 @end
 
 @interface CKMediaObject : NSObject
@@ -309,6 +319,7 @@ typedef NS_ENUM(SInt8, CKBalloonColor) {
 @interface CKConversation : NSObject
 @property (retain, nonatomic) IMChat *chat;
 @property (assign, nonatomic) NSUInteger limitToLoad;
+- (void)markAllMessagesAsRead;
 @end
 
 @interface CKConversationList : NSObject
@@ -514,30 +525,37 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 @interface CKScheduledUpdater : CKManualUpdater
 @end
 
-@class CKPhotoPickerSheetViewController;
-
-@protocol CKCameraSheetViewControllerDelegate <NSObject>
-@required
-- (void)ckPhotoPickerViewControllerProceedToTakeAPicture:(CKPhotoPickerSheetViewController *)pickerController;
-- (void)ckPhotoPickerViewControllerProceedToChooseExisting:(CKPhotoPickerSheetViewController *)pickerController;
-- (void)ckPhotoPickerViewControllerCancel:(CKPhotoPickerSheetViewController *)pickerController;
-- (void)ckPhotoPickerViewController:(CKPhotoPickerSheetViewController *)pickerController selectedAssets:(NSArray *)assets shouldSend:(BOOL)send;
-- (void)ckPhotoPickerViewController:(CKPhotoPickerSheetViewController *)pickerController resizeToSize:(CGSize)size;
-@end
-
 @interface CKPhotoPickerCollectionView : UICollectionView
 @end
 
-@interface CKPhotoPickerSheetViewController : UIViewController {
+@interface CKPhotoPickerSheetViewController : UIViewController { // iOS 8.0+
     NSArray *_assets;
 }
 @property (retain, nonatomic) CKPhotoPickerCollectionView *photosCollectionView;
-@property (assign, nonatomic) id<CKCameraSheetViewControllerDelegate> delegate;
 - (instancetype)initWithPresentationViewController:(UIViewController *)viewController;
 @end
 
-@interface CouriaPhotosViewController : CKPhotoPickerSheetViewController
-- (NSArray *)fetchAndClearSelectedAssets;
+@interface CKPhotoPickerItemForSending : NSObject
+@property (retain, nonatomic, readonly) NSURL *assetURL;
+@property (retain, nonatomic, readonly) NSURL *localURL;
+@property (retain) UIImage *thumbnail;
+- (void)waitForOutstandingWork;
+@end
+
+@interface CKPhotoPickerCollectionViewController : CKViewController <UICollectionViewDataSource, UICollectionViewDelegate>
+@property (retain, nonatomic) PHFetchResult *assets;
+@property (retain, nonatomic, readonly) NSArray *assetsToSend;
+@property (retain, nonatomic) UICollectionView *collectionView;
+@end
+
+@interface CKPhotoPickerController : UIViewController // iOS 8.3+
+@property (retain, nonatomic) CKPhotoPickerCollectionViewController *photosCollectionView;
+@end
+
+@interface CouriaPhotosViewController : NSObject
+- (UIViewController *)viewController;
+- (UIView *)view;
+- (NSArray *)fetchAndClearSelectedPhotos;
 @end
 
 @protocol NCInteractiveNotificationHostInterface
@@ -596,7 +614,7 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 - (void)sendMessage;
 @end
 
-@interface CKInlineReplyViewController (Couria)
+@interface CouriaInlineReplyViewController : CKInlineReplyViewController
 @property (retain, nonatomic, readonly) CPDistributedMessagingCenter *messagingCenter;
 @property (retain, nonatomic) CouriaConversationViewController *conversationViewController;
 @property (retain, nonatomic) CouriaContactsViewController *contactsViewController;
@@ -604,10 +622,10 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 - (void)photoButtonTapped:(UIButton *)button;
 @end
 
-@interface CouriaInlineReplyViewController_MobileSMSApp : CKInlineReplyViewController
+@interface CouriaInlineReplyViewController_MobileSMSApp : CouriaInlineReplyViewController
 @end
 
-@interface CouriaInlineReplyViewController_ThirdPartyApp : CKInlineReplyViewController
+@interface CouriaInlineReplyViewController_ThirdPartyApp : CouriaInlineReplyViewController
 @end
 
 @interface CKUIBehavior : NSObject
@@ -619,6 +637,7 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 - (CGFloat)transcriptContactImageDiameter;
 - (UIColor *)transcriptBackgroundColor;
 - (BOOL)transcriptCanUseOpaqueMask;
+- (CGFloat)photoPickerMaxPhotoHeight;
 - (BOOL)photoPickerShouldZoomOnSelection;
 - (NSArray *)balloonColorsForColorType:(CKBalloonColor)colorType;
 - (UIColor *)unfilledBalloonColorForColorType:(CKBalloonColor)colorType;
@@ -647,6 +666,9 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 
 @interface CKUIBehaviorHUDPad : CKUIBehavior
 @end
+
+extern BOOL PUTIsPersistentURL(NSURL *url);
+extern NSString *PUTCreatePathForPersistentURL(NSURL *url);
 
 @interface SPSearchResult : NSObject
 @property (nonatomic) NSUInteger identifier;
@@ -709,7 +731,7 @@ typedef NS_ENUM(SInt8, CKBalloonOrientation) {
 
 @interface SBIconViewMap : SBReusableViewMap
 @property (retain, nonatomic, readonly) SBIconModel *iconModel;
-+ (SBIconModel *)homescreenMap;
++ (SBIconViewMap *)homescreenMap;
 @end
 
 @interface SBUIBannerItem : NSObject
@@ -766,6 +788,13 @@ extern void CouriaUpdateBulletinRequest(BBBulletinRequest *bulletinRequest);
 extern void CouriaPresentViewController(NSString *application, NSString *user);
 extern void CouriaDismissViewController(void);
 
+extern void CouriaNotificationsInit(void);
+extern void CouriaGesturesInit(void);
+extern void CouriaUIViewServiceInit(void);
+extern void CouriaUIMobileSMSAppInit(void);
+extern void CouriaUIThirdPartyAppInit(void);
+extern void CouriaUIPhotosViewInit(void);
+
 CHInline void CouriaRegisterDefaults(NSUserDefaults *preferences, NSString *applicationIdentifier)
 {
     [preferences registerDefaults:@{
@@ -798,7 +827,7 @@ CHInline UIColor *CouriaColor(NSString *colorString)
 {
     CGFloat red = 0, green = 0, blue = 0, alpha = 0;
     if (colorString.length == 6) {
-        colorString = [colorString stringByAppendingString:@"FF"];
+        colorString = [colorString stringByAppendingString:@"ff"];
     }
     if (colorString.length == 8) {
         unsigned int colorValue;
@@ -809,6 +838,13 @@ CHInline UIColor *CouriaColor(NSString *colorString)
         alpha = ((colorValue >> 0) & 0xff) / 255.f;
     }
     return [UIColor colorWithRed:red green:green blue:blue alpha:alpha];
+}
+
+CHInline NSString *CouriaColorString(UIColor *color)
+{
+    CGFloat red = 0, green = 0, blue = 0, alpha = 0;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return [NSString stringWithFormat:@"%02x%02x%02x%02x", (unsigned int)(red * 255), (unsigned int)(green * 255), (unsigned int)(blue * 255), (unsigned int)(alpha * 255)];
 }
 
 @interface CouriaMessage : NSObject <CouriaMessage>
@@ -899,7 +935,7 @@ typedef enum PSCellType {
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier;
 @end
 
-@interface PSListController : PSViewController {
+@interface PSListController : PSViewController <UITableViewDataSource, UITableViewDelegate> {
     NSArray *_specifiers;
 }
 @property (retain, nonatomic) NSArray *specifiers;

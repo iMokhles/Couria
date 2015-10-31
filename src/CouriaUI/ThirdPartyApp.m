@@ -1,8 +1,6 @@
-#import "Headers.h"
+#import "../Headers.h"
 
-static CKMediaObjectManager *mediaObjectManager;
-
-CHDeclareClass(CKInlineReplyViewController)
+CHDeclareClass(CouriaInlineReplyViewController)
 CHDeclareClass(CouriaInlineReplyViewController_ThirdPartyApp)
 
 CHOptimizedMethod(0, super, void, CouriaInlineReplyViewController_ThirdPartyApp, setupConversation)
@@ -31,7 +29,7 @@ CHOptimizedMethod(0, super, void, CouriaInlineReplyViewController_ThirdPartyApp,
                 messageItem.plainBody = string;
             } else if ([content isKindOfClass:NSURL.class]) {
                 NSURL *url = content;
-                CKMediaObject *mediaObject = [mediaObjectManager mediaObjectWithFileURL:url filename:url.lastPathComponent transcoderUserInfo:nil];
+                CKMediaObject *mediaObject = [[CKMediaObjectManager sharedInstance]mediaObjectWithFileURL:url filename:url.lastPathComponent transcoderUserInfo:nil];
                 messageItem.body = [[NSAttributedString alloc]initWithString:IMAttachmentCharacterString attributes:@{
                     IMMessagePartAttributeName: @(1),
                     IMFileTransferGUIDAttributeName: mediaObject.transferGUID,
@@ -40,7 +38,11 @@ CHOptimizedMethod(0, super, void, CouriaInlineReplyViewController_ThirdPartyApp,
                 }];
             }
             messageItem.context = [IMMessage messageFromIMMessageItem:messageItem sender:nil subject:nil];
-            [chatItems addObject:[self.conversationViewController chatItemWithIMChatItem:messageItem._newChatItems]];
+            CKChatItem *chatItem = [self.conversationViewController chatItemWithIMChatItem:messageItem._newChatItems];
+            if (chatItem.transcriptDrawerText == nil) {
+                chatItem.transcriptDrawerText = [[NSAttributedString alloc]initWithString:@""];
+            }
+            [chatItems addObject:chatItem];
         }];
         self.conversationViewController.chatItems = chatItems;
     } else {
@@ -114,16 +116,13 @@ CHOptimizedMethod(0, super, void, CouriaInlineReplyViewController_ThirdPartyApp,
     }
 }
 
-CHConstructor
+void CouriaUIThirdPartyAppInit(void)
 {
-    @autoreleasepool {
-        mediaObjectManager = [CKMediaObjectManager sharedInstance];
-        CHLoadLateClass(CKInlineReplyViewController);
-        CHRegisterClass(CouriaInlineReplyViewController_ThirdPartyApp, CKInlineReplyViewController) {
-            CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, setupConversation);
-            CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, setupView);
-            CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, interactiveNotificationDidAppear);
-            CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, sendMessage);
-        }
+    CHLoadLateClass(CouriaInlineReplyViewController);
+    CHRegisterClass(CouriaInlineReplyViewController_ThirdPartyApp, CouriaInlineReplyViewController) {
+        CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, setupConversation);
+        CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, setupView);
+        CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, interactiveNotificationDidAppear);
+        CHHook(0, CouriaInlineReplyViewController_ThirdPartyApp, sendMessage);
     }
 }

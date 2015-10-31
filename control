@@ -1,16 +1,14 @@
-Package: me.qusic.couria
+Package: me.qusic.couriaios8
 Name: Couria
-Version: 0.8
+Version: 0.8.6
 Description: Centralized Quick Reply System
 Section: Tweaks
-Installed-Size: 0
 Depends: firmware (>= 8.0), mobilesubstrate, preferenceloader
 Priority: optional
 Architecture: iphoneos-arm
-Author: Qusic <QusicS@Me.com>
-Maintainer: Qusic <QusicS@Me.com>
-Sponsor: Qusic.me <http://Qusic.me>
+Author: Qusic <hi@qusic.me>
+Maintainer: Qusic <hi@qusic.me>
+Sponsor: Qusic <hi@qusic.me>
 Icon: file:///Library/PreferenceBundles/CouriaPreferences.bundle/Couria.png
-Homepage: http://Qusic.me/Couria
-Depiction: http://Cydia.Qusic.me/htmls/couria.html
+Homepage: http://qusic.me/
 Tag: purpose::extension
