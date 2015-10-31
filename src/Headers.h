@@ -199,20 +199,6 @@ extern NSString *IMStripFormattingFromAddress(NSString *formattedAddress);
 @property (retain, nonatomic) NSDate *timeDelivered;
 @property (retain, nonatomic) NSDate *timeRead;
 @property (assign, nonatomic) NSUInteger flags;
-
-@property(readonly, nonatomic) BOOL isSent;
-@property(readonly, nonatomic) BOOL isEmote;
-@property(readonly, nonatomic) BOOL isLocatingMessage;
-@property(readonly, nonatomic) BOOL isTypingMessage;
-@property(readonly, nonatomic) BOOL isPrepared;
-@property(readonly, nonatomic) BOOL isDelivered;
-- (BOOL)isFromMe;
-@property(readonly, nonatomic) BOOL isPlayed;
-@property(readonly, nonatomic) BOOL isExpirable;
-@property(readonly, nonatomic) BOOL isAudioMessage;
-@property(readonly, nonatomic) BOOL isRead;
-@property(readonly, nonatomic) BOOL isEmpty;
-@property(readonly, nonatomic) BOOL isFinished;
 @end
 
 @interface IMMessage : NSObject
